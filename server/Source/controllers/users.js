@@ -63,5 +63,37 @@ const getUser = async (req, res) => {
         res.status(500).send('Internal Server Error');
     }
 };
+const uploadPost = async (req, res) => {
+    try {
+        const { title, description, image } = req.body;
+        console.log(req.body)
+        await knex('newsFeeds').insert({
+            title,
+            description,
+            image
+        });
+        res.status(201).json({
+            success: true,
+            message: 'News feed created successfully',
+        });
+    } catch (error) {
+        console.error('Error creating news feed:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Internal server error'
+        });
+    }
+}
+const getUsersNews = async (req, res) => {
+    try {
+        const userData = await knex.select("*").from("newsFeeds");
+        res.status(200).json(userData);
 
-module.exports = { userLogin, getUser, checkLoginUser };
+    } catch (error) {
+        console.log("Error occurred while fetching newsFeed data:", error);
+        res.status(500).send("Internal Server Error");
+    }
+}
+
+
+module.exports = { userLogin, getUser, checkLoginUser, uploadPost, getUsersNews };
