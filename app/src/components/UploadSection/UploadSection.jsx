@@ -1,128 +1,146 @@
-import axios from "axios";
-import React, { useState } from "react";
-import { IoCloudUpload } from "react-icons/io5";
+import React, { useEffect, useState, useCallback } from "react";
 
 const UploadSection = () => {
-  const PostUrl = "http://localhost:4000/users/api/newsFeeds";
-  const [uploadData, setUploadData] = useState({
-    title: "",
-    description: "",
-    image: null,
-  });
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [image, setImage] = useState(null);
 
-  const handleUploadClick = () => {
-    document.getElementById("selectedFile").click();
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    setImage(file);
   };
 
-  const handleFileChange = (event) => {
-    const file = URL.createObjectURL(event.target.files[0]);
-    setUploadData((prevState) => ({
-      ...prevState,
-      image: file,
-    }));
-    openForm();
-  };
+  const handleSubmit = useCallback(
+    async (e) => {
+      e.preventDefault();
+      try {
+        const formData = new FormData();
+        formData.append("title", title);
+        formData.append("description", description);
+        formData.append("image", image);
 
-  const openForm = () => {
-    console.log("Form opened");
-  };
+        const response = await fetch(
+          "http://localhost:4000/users/api/newsFeeds",
+          {
+            method: "POST",
+            body: formData,
+          }
+        );
 
-  const handleFormSubmit = async (event) => {
-    event.preventDefault();
-    try {
-      axios.post(PostUrl, uploadData);
-    } catch (error) {}
-  };
+        if (response.ok) {
+          alert("Post uploaded successfully");
+          setTitle("");
+          setDescription("");
+          setImage(null);
+        } else {
+          const data = await response.json();
+          alert(data.message);
+        }
+      } catch (error) {
+        console.error("Error uploading post:", error);
+      }
+    },
+    [title, description, image]
+  );
 
-  const handleInputChange = (event) => {
-    const { name, value } = event.target;
-    setUploadData((prevState) => ({
-      ...prevState,
-      [name]: value,
-    }));
-  };
+  useEffect(() => {
+    const submitOnStateChange = async () => {
+      if (title !== "" && description !== "" && image !== null) {
+        try {
+          await handleSubmit();
+        } catch (error) {
+          console.error("Error submitting form:", error);
+        }
+      }
+    };
+
+    submitOnStateChange();
+  }, [title, description, image, handleSubmit]);
 
   return (
-    <div
-      style={{
-        marginTop: "20px",
-        display: "flex",
-        justifyContent: "center",
-      }}
-    >
-      <div
+    <div style={{ textAlign: "center" }}>
+      <h2 style={{ color: "#333", marginBottom: "20px" }}>Upload Post</h2>
+      <form
+        onSubmit={handleSubmit}
         style={{
-          display: "flex",
-          justifyContent: "center",
-          flexDirection: "column",
-          alignItems: "center",
-          gap: "15px",
-          width: "fit-content",
-          border: "1px solid #808B96 ",
-          borderRadius: "5px",
-          padding: "30px",
-          cursor: "pointer",
+          maxWidth: "400px",
+          margin: "0 auto",
+          border: "1px solid black",
+          padding: "20px",
         }}
-        onClick={handleUploadClick}
       >
-        <div>
-          Create <br /> Story
-        </div>
-        <div>
-          <IoCloudUpload />
-          <input
-            type="file"
-            id="selectedFile"
-            style={{
-              visibility: "hidden",
-              width: "0px",
-            }}
-            onChange={handleFileChange}
-          />
-        </div>
-      </div>
-      {uploadData.image && (
-        <form
-          onSubmit={handleFormSubmit}
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "center",
-            gap: "10px",
-          }}
-        >
+        <div style={{ marginBottom: "15px" }}>
+          <label
+            htmlFor="title"
+            style={{ display: "block", marginBottom: "5px" }}
+          >
+            Title:
+          </label>
           <input
             type="text"
-            name="title"
-            placeholder="Title"
-            value={uploadData.title}
-            onChange={handleInputChange}
+            id="title"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            required
             style={{
+              width: "100%",
+              padding: "10px",
               borderRadius: "5px",
-              padding: "5px",
+              border: "1px solid #ccc",
             }}
           />
+        </div>
+        <div style={{ marginBottom: "15px" }}>
+          <label
+            htmlFor="description"
+            style={{ display: "block", marginBottom: "5px" }}
+          >
+            Description:
+          </label>
           <textarea
-            name="description"
-            placeholder="Description"
-            value={uploadData.description}
-            onChange={handleInputChange}
+            id="description"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            required
             style={{
+              width: "100%",
+              padding: "10px",
               borderRadius: "5px",
-              padding: "5px",
+              border: "1px solid #ccc",
             }}
           ></textarea>
-          <button
-            type="submit"
-            style={{
-              borderRadius: "5px",
-              padding: "5px",
-            }}
+        </div>
+        <div style={{ marginBottom: "15px" }}>
+          <label
+            htmlFor="image"
+            style={{ display: "block", marginBottom: "5px" }}
           >
-            Submit
-          </button>
-        </form>
-      )}
+            Image:
+          </label>
+          <input
+            type="file"
+            id="image"
+            name="image"
+            accept="image/*"
+            onChange={handleImageChange}
+            required
+            style={{ display: "block" }}
+          />
+        </div>
+        <button
+          type="submit"
+          style={{
+            backgroundColor: "#007bff",
+            color: "#fff",
+            padding: "10px 20px",
+            borderRadius: "5px",
+            border: "none",
+            cursor: "pointer",
+          }}
+        >
+          Upload
+        </button>
+      </form>
     </div>
   );
 };

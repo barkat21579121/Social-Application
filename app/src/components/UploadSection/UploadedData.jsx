@@ -31,9 +31,12 @@ const UploadedData = () => {
                   {" "}
                   <h1>{item.title}</h1>
                   <p>{item.description}</p>
+                  <img
+                    src={"http://localhost:4000" + item.imagePath}
+                    alt="loading..."
+                  />
+                  {console.log(`http://localhost:4000/${item.imagePath}`)}
                 </div>
-                <img src={item.image} alt="loading..." />
-                <div></div>
               </div>
             </>
           );

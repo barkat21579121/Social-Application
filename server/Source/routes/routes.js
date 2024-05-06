@@ -1,15 +1,41 @@
-const express = require('express')
-const { getUser, userLogin, checkLoginUser, uploadPost, getUsersNews } = require('../controllers/users')
+const express = require('express');
+const multer = require('multer');
 
-const router = express.Router()
+const { v4: uuidv4 } = require('uuid');
+const { getUser, userLogin, checkLoginUser, uploadPost, getUsersNews } = require('../controllers/users');
+const uploadDirectory = "uploads"
 
-router.get("/", getUser)
-router.post("/signup", userLogin)
-router.post("/Signin", checkLoginUser)
-router.post("/newsFeeds", uploadPost)
-router.get("/getNewsFeedData", getUsersNews)
+const router = express.Router();
 
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, uploadDirectory);
+    },
+    filename: function (req, file, cb) {
+        const uniqueFilename = uuidv4();
+        cb(null, uniqueFilename + '-' + file.originalname);
+    }
+});
 
+const fileFilter = (req, file, cb) => {
+    if (!file.originalname.match(/\.(jpg|jpeg|png)$/)) {
+        return cb(new Error('Please upload a valid image file'));
+    }
+    cb(null, true);
+};
 
+const upload = multer({
+    storage: storage,
+    limits: {
+        fileSize: 1000000
+    },
+    fileFilter: fileFilter
+});
 
-module.exports = router
+router.get("/", getUser);
+router.post("/signup", userLogin);
+router.post("/signin", checkLoginUser);
+router.post("/newsFeeds", upload.single('image'), uploadPost);
+router.get("/getNewsFeedData", getUsersNews);
+
+module.exports = router;
